@@ -3,6 +3,7 @@
 class Workout {
   date = new Date();
   id = (Date.now() + '').slice(-10);
+  clicks = 0;
   constructor(coords, distance, duration) {
     this.coords = coords; // [lat,lng]
     this.distance = distance; // in km
@@ -17,6 +18,9 @@ class Workout {
       months[this.date.getMonth()]
     } ${this.date.getDate()}`;
     console.log(this.description);
+  }
+  click() {
+    this.clicks++;
   }
 }
 
@@ -68,10 +72,12 @@ class App {
   #map;
   #mapEvent;
   #workouts = [];
+  #mapZoomLevel = 13;
   constructor() {
     this._getPosition();
-    form.addEventListener('submit', this._neWorkout.bind(this));
+    form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
+    containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
   }
 
   //getting user position
@@ -98,7 +104,7 @@ class App {
 
     console.log(`https://www.google.com/maps/@${latitude},${longitude}`);
     console.log(this);
-    this.#map = L.map('map').setView(cords, 13);
+    this.#map = L.map('map').setView(cords, this.#mapZoomLevel);
 
     L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
       attribution:
@@ -129,7 +135,7 @@ class App {
     inputElevation.closest('.form__row').classList.toggle('form__row--hidden');
     inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
   }
-  _neWorkout(e) {
+  _newWorkout(e) {
     //checking for number
     const validInput = (...inputs) => inputs.every(inp => Number.isFinite(inp));
 
@@ -207,7 +213,7 @@ class App {
           minWidth: 100,
           autoClose: false,
           closeOnClick: false,
-          className: ``,
+          className: `${workout.type}-popup`,
         })
       )
       .setPopupContent(
@@ -265,6 +271,23 @@ class App {
     }
 
     form.insertAdjacentHTML('afterend', html);
+  }
+  _moveToPopup(e) {
+    const workoutEl = e.target.closest('.workout');
+    console.log(workoutEl);
+
+    if (!workoutEl) return;
+
+    const workout = this.#workouts.find(
+      work => work.id === workoutEl.dataset.id
+    );
+    this.#map.setView(workout.coords, this.#mapZoomLevel, {
+      animate: true,
+      pan: {
+        duration: 1,
+      },
+    });
+    workout.click();
   }
 }
 
