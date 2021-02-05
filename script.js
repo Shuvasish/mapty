@@ -193,15 +193,12 @@ class App {
 
     //render workout on the list
     this._renderWorkoutList(workout);
-    //hide the form and clear the input fields
 
+    //hide the form and clear the input fields
     this._hideForm();
 
-    //clearing input fields
-
-    //display marker
-
-    // form.classList.add('hidden');
+    //set local storage to all workouts
+    this._setLocalStorage();
   }
 
   _renderWorkoutMarker(workout) {
@@ -288,6 +285,9 @@ class App {
       },
     });
     workout.click();
+  }
+  _setLocalStorage() {
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts));
   }
 }
 
