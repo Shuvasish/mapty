@@ -17,7 +17,6 @@ class Workout {
     this.description = `${this.type[0].toUpperCase()}${this.type.slice(1)} on ${
       months[this.date.getMonth()]
     } ${this.date.getDate()}`;
-    console.log(this.description);
   }
   click() {
     this.clicks++;
@@ -74,7 +73,13 @@ class App {
   #workouts = [];
   #mapZoomLevel = 13;
   constructor() {
+    //get user's position
     this._getPosition();
+
+    //get data from local storage
+    this._getLocalStorage();
+
+    //attached event handler
     form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
     containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
@@ -83,7 +88,6 @@ class App {
   //getting user position
   _getPosition() {
     if (navigator.geolocation) {
-      console.log(this);
       navigator.geolocation.getCurrentPosition(
         this._loadMap.bind(this),
         function () {
@@ -102,8 +106,6 @@ class App {
     const cords = [latitude, longitude];
     // console.log(cords);
 
-    console.log(`https://www.google.com/maps/@${latitude},${longitude}`);
-    console.log(this);
     this.#map = L.map('map').setView(cords, this.#mapZoomLevel);
 
     L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
@@ -112,12 +114,15 @@ class App {
     }).addTo(this.#map);
 
     //handling click on maps
-
     this.#map.on('click', this._showForm.bind(this));
+
+    //
+    this.#workouts.forEach(work => {
+      this._renderWorkoutMarker(work);
+    });
   }
 
   _showForm(mapE) {
-    console.log(this);
     this.#mapEvent = mapE;
     form.classList.remove('hidden');
     inputDistance.focus();
@@ -187,8 +192,7 @@ class App {
     //add new object to the workouts
     this.#workouts.push(workout);
     //render workout on the map as a marker
-    console.log(this.#mapEvent.latlng.lat, this.#mapEvent.latlng.lng);
-    console.log(type);
+
     this._renderWorkoutMarker(workout);
 
     //render workout on the list
@@ -217,7 +221,6 @@ class App {
         `${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`
       )
       .openPopup();
-    console.log(this.#workouts);
   }
 
   _renderWorkoutList(workout) {
@@ -271,7 +274,6 @@ class App {
   }
   _moveToPopup(e) {
     const workoutEl = e.target.closest('.workout');
-    console.log(workoutEl);
 
     if (!workoutEl) return;
 
@@ -284,10 +286,29 @@ class App {
         duration: 1,
       },
     });
-    workout.click();
+    // workout.click();
   }
   _setLocalStorage() {
     localStorage.setItem('workouts', JSON.stringify(this.#workouts));
+  }
+  _getLocalStorage() {
+    //
+    const data = JSON.parse(localStorage.getItem('workouts'));
+    // console.log(data);
+
+    if (!data) return;
+
+    this.#workouts = data;
+
+    this.#workouts.forEach(work => {
+      this._renderWorkoutList(work);
+    });
+  }
+  reset() {
+    //deleting data from local storage
+    localStorage.removeItem('workouts');
+    //reloading page
+    location.reload();
   }
 }
 
